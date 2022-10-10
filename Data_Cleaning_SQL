@@ -1,0 +1,140 @@
+
+-- How to Standardize Data Format:
+
+Select SaleDateConverted, CONVERT (Date, SaleDate) AS only_date
+FROM Nashville.dbo.Nashville
+
+ALTER TABLE Nashville
+ADD SaleDateConverted Date;
+
+UPDATE Nashville
+SET SaleDateConverted = CONVERT (Date, SaleDate)
+
+
+-- Populate Property Address Data:
+
+--Verifying NULL Values:
+Select *
+FROM Nashville.dbo.Nashville
+WHERE PropertyAddress IS NULL
+ORDER BY ParcelID
+
+--Self-Join Table:
+FROM Nashville.dbo.Nashville as Old
+JOIN Nashville.dbo.Nashville as New
+ON Old.ParcelID = New.ParcelID
+AND Old.[UniqueID ] <> New.[UniqueID ]
+
+
+Select Old.ParcelID, Old.PropertyAddress, New.ParcelID, New.PropertyAddress, ISNULL (Old.PropertyAddress, New.PropertyAddress)
+FROM Nashville.dbo.Nashville as Old
+JOIN Nashville.dbo.Nashville as New
+ON Old.ParcelID = New.ParcelID
+AND Old.[UniqueID ] <> New.[UniqueID ]
+WHERE Old.PropertyAddress IS NULL
+
+UPDATE Old
+SET PropertyAddress = ISNULL (Old.PropertyAddress, New.PropertyAddress)
+FROM Nashville.dbo.Nashville as Old
+JOIN Nashville.dbo.Nashville as New
+ON Old.ParcelID = New.ParcelID
+AND Old.[UniqueID ] <> New.[UniqueID ]
+WHERE Old.PropertyAddress IS NULL
+
+
+--Breaking out Address into Individual Columns (Address, City, State):
+
+--Working on PropertyAddress (using substring):
+Select PropertyAddress
+FROM Nashville.dbo.Nashville
+
+--To get Address:
+SELECT SUBSTRING (PropertyAddress, 1, CHARINDEX (',', PropertyAddress) - 1) AS Address 
+FROM Nashville.dbo.Nashville
+
+--To get City:
+SELECT SUBSTRING (PropertyAddress, 1, CHARINDEX (',', PropertyAddress) - 1) AS Address,
+ SUBSTRING (PropertyAddress, CHARINDEX (',', PropertyAddress) + 1, LEN (PropertyAddress)) AS City
+FROM Nashville.dbo.Nashville
+FROM Nashville.dbo.Nashville
+
+--Creating Columns:
+
+ALTER TABLE Nashville
+ADD PropertySplitAddress NVARCHAR (255);
+
+UPDATE Nashville
+SET PropertySplitAddress = SUBSTRING (PropertyAddress, 1, CHARINDEX (',', PropertyAddress) - 1)
+
+ALTER TABLE Nashville
+ADD PropertySplitCity NVARCHAR (255);
+
+UPDATE Nashville
+SET PropertySplitCity = SUBSTRING (PropertyAddress, CHARINDEX (',', PropertyAddress) + 1, LEN (PropertyAddress))
+
+
+
+--Working on OwnerAddress (using PARSENAME):
+
+SELECT OwnerAddress
+FROM Nashville.dbo.Nashville
+
+-- Breaking Down OwnerAddress into columns using PARSENAME:
+SELECT PARSENAME (REPLACE (OwnerAddress, ',', '.'), 3),
+PARSENAME (REPLACE (OwnerAddress, ',', '.'), 2),
+PARSENAME (REPLACE (OwnerAddress, ',', '.'), 1)
+
+
+--Updating table using PARSENAME:
+
+ALTER TABLE Nashville
+ADD OwnerSplitAddress NVARCHAR (255);
+
+UPDATE Nashville
+SET OwnerSplitAddress = PARSENAME (REPLACE (OwnerAddress, ',', '.'), 3)
+
+ALTER TABLE Nashville
+ADD OwnerSplitCity NVARCHAR (255);
+
+UPDATE Nashville
+SET OwnerSplitCity = PARSENAME (REPLACE (OwnerAddress, ',', '.'), 2)
+
+ALTER TABLE Nashville
+ADD OwnerSplitState NVARCHAR (255);
+
+UPDATE Nashville
+SET OwnerSplitState = PARSENAME (REPLACE (OwnerAddress, ',', '.'), 1)
+FROM Nashville.dbo.Nashville
+
+
+
+-- Change Y and N to "Yes" and "No" in "Sold as Vacant" Field:
+
+--Checking Values:
+SELECT DISTINCT (SoldAsVacant), COUNT (SoldAsVacant)
+FROM Nashville.dbo.Nashville
+GROUP BY SoldAsVacant
+ORDER BY 2
+
+--Using CASE statement:
+
+SELECT SoldAsVacant,
+CASE WHEN SoldAsVacant = 'Y' THEN 'Yes'
+WHEN SoldAsVacant = 'N' THEN 'No'
+ELSE SoldAsVacant
+END
+FROM Nashville.dbo.Nashville
+
+--Updating Table:
+
+UPDATE Nashville
+SET SoldAsVacant = 
+CASE WHEN SoldAsVacant = 'Y' THEN 'Yes'
+WHEN SoldAsVacant = 'N' THEN 'No'
+ELSE SoldAsVacant
+END
+
+
+--Removing Duplicates:
+
+
