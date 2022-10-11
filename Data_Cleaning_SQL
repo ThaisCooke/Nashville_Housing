@@ -137,4 +137,62 @@ END
 
 --Removing Duplicates:
 
+--Initial Query:
+
+SELECT *,
+ROW_NUMBER () OVER (
+PARTITION BY ParcelId,
+			PropertyAddress,
+			SalePrice,
+			SaleDate,
+			LegalReference
+			ORDER BY
+			UniqueID
+			) row_num
+FROM Nashville.dbo.nashville
+
+--Using CTE to pull duplicates:
+
+WITH RownumCTE AS (
+SELECT *,
+ROW_NUMBER () OVER (
+PARTITION BY ParcelId,
+			PropertyAddress,
+			SalePrice,
+			SaleDate,
+			LegalReference
+			ORDER BY
+			UniqueID
+			) row_num
+FROM Nashville.dbo.nashville)
+SELECT *
+FROM RownumCTE
+WHERE row_num > 1
+ORDER BY PropertyAddress
+
+-- Deleting duplicates:
+
+WITH RownumCTE AS (
+SELECT *,
+ROW_NUMBER () OVER (
+PARTITION BY ParcelId,
+			PropertyAddress,
+			SalePrice,
+			SaleDate,
+			LegalReference
+			ORDER BY
+			UniqueID
+			) row_num
+FROM Nashville.dbo.nashville)
+DELETE
+FROM RownumCTE
+WHERE row_num > 1
+
+
+--Delete unused columns:
+
+ALTER TABLE Nashville.dbo.nashville
+DROP COLUMN OwnerAddress, TaxDistrict, PropertyAddress, SaleDate
+
+
 
