@@ -83,6 +83,7 @@ FROM Nashville.dbo.Nashville
 SELECT PARSENAME (REPLACE (OwnerAddress, ',', '.'), 3),
 PARSENAME (REPLACE (OwnerAddress, ',', '.'), 2),
 PARSENAME (REPLACE (OwnerAddress, ',', '.'), 1)
+FROM Nashville.dbo.Nashville
 
 
 --Updating table using PARSENAME:
